@@ -13,8 +13,6 @@ import pandas
 
 ##### CONFIG FILES
 
-# configfile: "./config/mod_mitohpc.yaml"
-
 ##### SETUP SAMPLES
 SAMPLES = pandas.read_csv('/projects/rmorin_scratch/ONT_scratch/samples.last.tsv', sep = "\t")
 CONTROLS = op.filter_samples(SAMPLES, pathology = ["BL", "DLBCL"])
@@ -57,6 +55,21 @@ rule dnarrange:
             dnarrange {input.maf} : {input.control} > {output.maf}
         """)
 
+#dnarrange stricter can run on existing maf
+#dnarrange -s3 groups.maf > strict.maf
+
+
+
+## merge dnarrange into consensus seq
+#dnarrange-merge 00-inputs/fastq/01-20985T.fq.gz 01-20985T.train 02-dnarrange/maf/01-20985T.strict.maf > 04-consensus-seq/01-20985T.merged.fa
+
+
+
+## realign merged dnarrange to genome with new DB
+#lastal -P24 -m20 --split -p ../../ref/01-20985.merged.par ../../ref/last-db_NEAR/mydb ../04-consensus-seq/01-20985T.merged.fa > 01-20985T.merged.maf
+
+## draw pics
+#last-multiplot 01-20985T.final.maf 01-20985T-pics
 
 rule all:
     input:
