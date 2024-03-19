@@ -56,13 +56,32 @@ rule dnarrange:
         """)
 
 #dnarrange stricter can run on existing maf
-#dnarrange -s3 groups.maf > strict.maf
-
-
+rule dnarrange_strict:
+    input:
+        maf = str(rules.dnarrange.output.maf)
+    output:
+        maf = "02-dnarrange/maf/{sample_id}.strict.maf"
+    conda: "/projects/rmorin_scratch/ONT_scratch/results/last/dnarrange.yaml"
+    shell:
+        op.as_one_line("""
+            dnarrange -s3 {input.maf} > {output.maf}
+        """)
 
 ## merge dnarrange into consensus seq
-#dnarrange-merge 00-inputs/fastq/01-20985T.fq.gz 01-20985T.train 02-dnarrange/maf/01-20985T.strict.maf > 04-consensus-seq/01-20985T.merged.fa
-
+rule dnarrange_merge:
+    input:
+        fq = str(rules.symlink_fastq.output.fq),
+        maf = str(rules.dnarrange_strict.output.maf)
+    output:
+        maf = "04-consensus-seq/maf/{sample_id}.merged.fa"
+    params:
+        train = "01-20985T.train"
+    conda: "/projects/rmorin_scratch/ONT_scratch/results/last/dnarrange.yaml"
+    shell:
+        op.as_one_line("""
+            dnarrange-merge {input.fq} \
+            {params.train} {input.maf} > {output.maf}
+        """)
 
 
 ## realign merged dnarrange to genome with new DB
