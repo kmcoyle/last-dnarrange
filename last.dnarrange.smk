@@ -73,19 +73,36 @@ rule dnarrange_merge:
         fq = str(rules.symlink_fastq.output.fq),
         maf = str(rules.dnarrange_strict.output.maf)
     output:
-        maf = "04-consensus-seq/maf/{sample_id}.merged.fa"
+        fa = "04-consensus-seq/maf/{sample_id}.merged.fa"
     params:
         train = "01-20985T.train"
     conda: "/projects/rmorin_scratch/ONT_scratch/results/last/dnarrange.yaml"
     shell:
         op.as_one_line("""
             dnarrange-merge {input.fq} \
-            {params.train} {input.maf} > {output.maf}
+            {params.train} {input.maf} > {output.fa}
         """)
 
 
 ## realign merged dnarrange to genome with new DB
-#lastal -P24 -m20 --split -p ../../ref/01-20985.merged.par ../../ref/last-db_NEAR/mydb ../04-consensus-seq/01-20985T.merged.fa > 01-20985T.merged.maf
+rule last_realign:
+    input:
+        fa = str(rules.dnarrange_merge.output.fa)
+    output:
+        maf = "04-consensus-seq/maf/{sample_id}.merged.fa"
+    params:
+        opts = "--split -p",
+        threads = "24",
+        sensitivity = "100",
+        train = "/projects/rmorin_scratch/ONT_scratch/results/ref/01-20985.merged.par",
+        ref_db = directory("/projects/rmorin_scratch/ONT_scratch/results/ref/last-db_NEAR/mydb")
+    conda: "/projects/rmorin_scratch/ONT_scratch/results/last/dnarrange.yaml"
+    shell:
+        op.as_one_line("""
+            lastal -P{params.threads} -m{params.sensitivity} {params.opts} {params.train} \
+            {params.ref_db} \
+            {input.fa} > {output.maf}
+        """)
 
 ## draw pics
 #last-multiplot 01-20985T.final.maf 01-20985T-pics
@@ -95,6 +112,6 @@ rule all:
         expand(rules.last_alignment.output.maf,
         zip,
         sample_id=SAMPLES['sample_id']),
-        expand(rules.dnarrange.output.maf,
+        expand(rules.last_realign.output.maf,
         zip,
         sample_id=MCLS['sample_id'])
