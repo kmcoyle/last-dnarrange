@@ -5,8 +5,7 @@ import os
 import pandas
 
 ##### SNAKEMAKE COMMAND
-# snakemake -np --use-conda -s mod_mitohpc_snakemake.smk all --cores 1 --config unix_group=all_the_things
-## had to increase mem_mb very high. double check this.
+# snakemake -p --use-conda --scheduler greedy --jobs 5000 --latency-wait 120 --keep-going --default-resources mem_mb=380000 disk_mb=2000  --cluster-sync "srun -p upgrade -n 1 -N 1 -J {rule} --mem {resources.mem_mb} --cpus-per-task {threads}" -s last.dnarrange.smk all -np
 # snakemake -p --use-conda --scheduler greedy --jobs 5000 --latency-wait 120 --keep-going --default-resources mem_mb=2000 disk_mb=2000  --cluster-sync "srun -p upgrade -n 1 -N 1 -J {rule} --mem {resources.mem_mb} --cpus-per-task {threads}" -s last.dnarrange.smk all -np
 
 ##### SETUP VARIABLES
@@ -89,7 +88,7 @@ rule last_realign:
     input:
         fa = str(rules.dnarrange_merge.output.fa)
     output:
-        maf = "04-consensus-seq/maf/{sample_id}.merged.fa"
+        maf = "05-realign-consensus/maf/{sample_id}.merged.maf"
     params:
         opts = "--split -p",
         threads = "24",
@@ -106,12 +105,46 @@ rule last_realign:
 
 ## draw pics
 #last-multiplot 01-20985T.final.maf 01-20985T-pics
+rule last_multiplot:
+    input:
+        maf = str(rules.last_realign.output.maf)
+    output:
+        pic_dir = directory("06-realign-pics/{sample_id}")
+    conda: "/projects/rmorin_scratch/ONT_scratch/results/last/dnarrange.yaml"
+    shell:
+        op.as_one_line("""
+            last-multiplot {input.maf} {output.pic_dir}
+        """)
+
+## edit maf to remove mismap rate
+rule remove_mismap:
+    input:
+        maf = str(rules.last_realign.output.maf)
+    output:
+        maf = "05-realign-consensus/maf/{sample_id}.no_mismap.maf"
+    shell:
+        op.as_one_line("""
+            sed '1 i ##maf version=1' {input.maf} | sed -r 's/mismap=[0-9\.e-]*//' > {output.maf}
+        """)
+
+## parse maf for coordinates
+rule parse_maf:
+    input:
+        alignment_maf = str(rules.remove_mismap.output.maf)
+    output:
+        alignment_df = "07-tsv-coordinates/tsv/{sample_id}.tsv"
+    conda: "/projects/rmorin_scratch/ONT_scratch/results/last/parse_maf.yaml"
+    script:
+        "/projects/rmorin_scratch/ONT_scratch/results/last/parse_maf.py"
 
 rule all:
     input:
         expand(rules.last_alignment.output.maf,
         zip,
         sample_id=SAMPLES['sample_id']),
-        expand(rules.last_realign.output.maf,
+        expand(rules.last_multiplot.output.pic_dir,
+        zip,
+        sample_id=MCLS['sample_id']),
+        expand(rules.parse_maf.output.alignment_df,
         zip,
         sample_id=MCLS['sample_id'])
