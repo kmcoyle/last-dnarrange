@@ -319,6 +319,24 @@ annotated_segs_rp_groups %>%
 
 ![](validate_short_SVs_files/figure-commonmark/plot_annotate-1.png)
 
+Getting count per sample
+
+``` r
+annotated_segs_rp_groups %>%
+    group_by(sample_id) %>%
+    summarize(n())
+```
+
+| sample_id | n() |
+|:----------|----:|
+| 01-20985  | 102 |
+| 07-11855  | 146 |
+| 07-20432  | 132 |
+| 12-20363  | 125 |
+| 12-22919  |  27 |
+| 13-10635  |  86 |
+| 17-20492  | 130 |
+
 Plot proportions of annotated vs unannotated per sample. Read in
 unannotated bed and add `NA` in cols unique to annotated, so that we can
 combine them into one df.
@@ -357,7 +375,7 @@ all_segs_after_rmsk  %>%
     summarize(Count = n()) %>%
     ungroup() %>%
     group_by(sample_id) %>%
-    arrange(sample_id, Count) %>%
+    arrange(sample_id, desc(annot_status)) %>%
     mutate(label_y = cumsum(Count)) %>%
     ggplot(aes(x=sample_id, y=Count, fill=annot_status)) +
     geom_bar(position="stack", stat="identity") +

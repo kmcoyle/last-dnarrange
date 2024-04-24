@@ -204,6 +204,13 @@ annotated_segs_rp_groups %>%
     ggtitle("Segments overlapping RepeatMasker annotations.\nNote: samples may share segments, and there can be multiple \"same location\" segments per sample")
 ```
 
+Getting count per sample
+```{r count_per_sample}
+annotated_segs_rp_groups %>%
+    group_by(sample_id) %>%
+    summarize(n())
+```
+
 Plot proportions of annotated vs unannotated per sample. Read in unannotated bed and add `NA` in cols unique to annotated, so that we can combine them into one df.
 ```{r read_unannot}
 unannotated_segs <- read_tsv("segs_of_interest_no_annotation.bed", col_names = c("chr", "start", "end", "read_name", "score", "strand","sample_id"), show_col_types = FALSE) %>%
@@ -235,7 +242,7 @@ all_segs_after_rmsk  %>%
     summarize(Count = n()) %>%
     ungroup() %>%
     group_by(sample_id) %>%
-    arrange(sample_id, Count) %>%
+    arrange(sample_id, desc(annot_status)) %>%
     mutate(label_y = cumsum(Count)) %>%
     ggplot(aes(x=sample_id, y=Count, fill=annot_status)) +
     geom_bar(position="stack", stat="identity") +
