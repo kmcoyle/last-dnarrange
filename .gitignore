@@ -1,0 +1,5 @@
+short_seg_investigation/renv.lock
+short_seg_investigation/repeatmasker_hg38_simplified.bed
+short_seg_investigation/renv/settings.json
+short_seg_investigation/renv/activate.R
+short_seg_investigation/renv/.gitignore
