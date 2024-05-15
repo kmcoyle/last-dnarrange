@@ -201,7 +201,7 @@ annotated_segs_rp_groups %>%
     summarize(Count = n()) %>%
     ggplot(aes(x=sample_id, y=Count, fill=repeat_type)) +
     geom_bar(position="stack", stat="identity") +
-    ggtitle("Segments overlapping RepeatMasker annotations.\nNote: samples may share segments, and there can be multiple \"same location\" segments per sample")
+    ggtitle("Segments overlapping RepeatMasker annotations.\nNote: samples may share segments, and there can be multiple\n \"same location\" segments per sample")
 ```
 
 Getting count per sample
@@ -246,7 +246,7 @@ all_segs_after_rmsk  %>%
     mutate(label_y = cumsum(Count)) %>%
     ggplot(aes(x=sample_id, y=Count, fill=annot_status)) +
     geom_bar(position="stack", stat="identity") +
-    ggtitle("Segments with or without RepeatMasker annotations.\nNote: there can be multiple \"same location\" segments per sample") +
+    ggtitle("Segments with or without RepeatMasker annotations.\nNote: there can be multiple\n \"same location\" segments per sample") +
     geom_text(aes(y=label_y, label = Count), vjust = 1.5, colour = "white")
 ```
 
@@ -260,6 +260,7 @@ all_segs_after_rmsk  %>%
 ## Compare locations
 I'm sure if we look for exact matching locations there won't be any
 ```{r exact_matches}
+#| eval: False
 same_start <- segs_correct_start %>%
     group_by(chr, start_5prime) %>%
     filter(n()>1) %>%
@@ -274,6 +275,7 @@ There are 283 out of 2914 total. There are a few ways this can happen (quick vis
 
 I think the across sample ones are most interesting right now. We can subset to these and show the distribution of segment lengths
 ```{r same_start_diff_samples}
+#| eval: False
 same_start_diff_samples <- same_start %>%
     group_by(chr, start_5prime) %>%
     mutate(num_samples = n_distinct(sample_id)) %>%
@@ -287,14 +289,17 @@ So all the samples show up in this
 
 Do any of these show up in ALL 7?
 ```{r same_start_all_samples}
+#| eval: False
 same_start_diff_samples %>% filter(num_samples == 7)
 ```
 Whats the distribution of the number of samples like?
 ```{r same_start_sample_count_distr}
+#| eval: False
 summary(same_start_diff_samples  %>% select(num_samples))
 ```
 Max is 5! How many/which segments are those
 ```{r same_start_in_5}
+#| eval: False
 same_start_diff_samples %>%
     filter(num_samples == 5)
 ```
@@ -305,6 +310,7 @@ Looking at "overlapping" starts when there is various amount of padding. I'd lik
 
 Starting with just finding any overlap between these segments. I think it's best to do with the a genomic ranges object and compare only across samples. We can create a genomic ranges list object that stores each of the indivial genomic ranges object for each sample.
 ```{r convert_to_GRanges}
+#| eval: False
 gr <- makeGRangesFromDataFrame(segs_correct_start %>% select(chr, start=start_5prime, end=end_5prime, sample_id), keep.extra.columns=TRUE)
 gr_list <- split(gr, as.factor(gr$sample_id))
 gr_list$`01-20985`
@@ -314,14 +320,17 @@ The above show how many segments in each.
 
 Just doing one comparison, for exploration of the GRanges obj and fns, bc I can't seem to find an existing function that will work for all the objects in the list
 ```{r compare_two_samples}
+#| eval: False
 findOverlaps(gr_list[[1]], gr_list[[2]], ignore.strand=TRUE)
 ```
 The code below will compare a single one to all of them (including itself unfortunately)
 ```{r compare_one_to all_test}
+#| eval: False
 findOverlaps(gr_list, gr_list[[1]], ignore.strand=TRUE)
 ```
 
 ```{r compare_one_to all}
+#| eval: False
 countOverlaps(gr_list, gr_list[[1]], ignore.strand=TRUE)
 countOverlaps(gr_list, gr_list[[2]], ignore.strand=TRUE)
 countOverlaps(gr_list, gr_list[[3]], ignore.strand=TRUE)
@@ -357,6 +366,7 @@ This maxgap is what I can vary as a % seg length.
 
 I should also be able to verify the numbers found before? At least across samples, within samples will still show the total amount. So for `01-20985` and `07-11855`
 ```{r same_start_first_two_samples}
+#| eval: False
 segs_correct_start %>%
     filter(sample_id %in% c("01-20985", "07-11855")) %>%
     group_by(chr, start_5prime) %>%
@@ -366,6 +376,7 @@ segs_correct_start %>%
 ```
 So expect 3 between these two
 ```{r findoverlaps_start}
+#| eval: False
 countOverlaps(gr_list, gr_list[[1]], ignore.strand=TRUE, type="start")
 countOverlaps(gr_list, gr_list[[2]], ignore.strand=TRUE, type="start")
 countOverlaps(gr_list, gr_list[[3]], ignore.strand=TRUE, type="start")

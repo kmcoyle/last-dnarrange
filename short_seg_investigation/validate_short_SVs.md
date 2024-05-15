@@ -1,6 +1,6 @@
 # Validate short SVs from Long Read MCL data
 Sierra Gillis
-2024-04-24
+2024-05-15
 
 - [Goal](#goal)
 - [Outline of process](#outline-of-process)
@@ -123,7 +123,7 @@ segs_of_interest <- read_tsv("promethion_last_dnarrange_1kb_segs.tsv", show_col_
 dim(segs_of_interest)
 ```
 
-    [1] 2914    9
+    [1] 2915    9
 
 There is also this explanation
 
@@ -139,14 +139,14 @@ This relates to how `read_strand` and `chr_strand` are not the same:
 head(segs_of_interest)
 ```
 
-| read_name | read_strand | read_start | read_seg_length | chr   | chr_strand | chr_start | chr_seg_length | sample_id |
-|:----------|------------:|-----------:|----------------:|:------|-----------:|----------:|---------------:|:----------|
-| merge7-3  |          -1 |      14067 |             315 | chr17 |          1 |  17040604 |            314 | 01-20985  |
-| merge10-3 |          -1 |      46924 |              56 | chr6  |          1 | 125636554 |             56 | 01-20985  |
-| merge5-3  |           1 |      17286 |             141 | chr7  |          1 |  23231798 |            141 | 01-20985  |
-| merge6-3  |           1 |      24509 |             310 | chr6  |          1 |   9494455 |            309 | 01-20985  |
-| merge3-7  |           1 |      47532 |              76 | chr2  |          1 | 212015033 |             76 | 01-20985  |
-| merge34-4 |           1 |      15179 |             326 | chrX  |          1 |  66747347 |            326 | 01-20985  |
+| read_name  | read_strand | read_start | read_seg_length | chr   | chr_strand | chr_start | chr_seg_length | sample_id |
+|:-----------|------------:|-----------:|----------------:|:------|-----------:|----------:|---------------:|:----------|
+| merge21-4  |           1 |      15179 |             326 | chrX  |          1 |  66747347 |            326 | 01-20985  |
+| merge22-3  |           1 |      49088 |             317 | chr3  |          1 |  52675833 |            317 | 01-20985  |
+| merge27-12 |          -1 |      37753 |             307 | chr1  |          1 | 218612586 |            307 | 01-20985  |
+| merge16-8  |          -1 |      35919 |             223 | chr10 |          1 |  21120269 |            217 | 01-20985  |
+| merge38-12 |           1 |      37222 |              92 | chrX  |          1 | 114982105 |             96 | 01-20985  |
+| merge44-11 |          -1 |      39167 |             289 | chr5  |          1 |  51289713 |            289 | 01-20985  |
 
 If I am understanding this correctly, the `read_start` refers to where
 this segment starts **in the read** and `chr_start` refers to the start
@@ -311,7 +311,7 @@ annotated_segs_rp_groups %>%
     summarize(Count = n()) %>%
     ggplot(aes(x=sample_id, y=Count, fill=repeat_type)) +
     geom_bar(position="stack", stat="identity") +
-    ggtitle("Segments overlapping RepeatMasker annotations.\nNote: samples may share segments, and there can be multiple \"same location\" segments per sample")
+    ggtitle("Segments overlapping RepeatMasker annotations.\nNote: samples may share segments, and there can be multiple\n \"same location\" segments per sample")
 ```
 
     `summarise()` has grouped output by 'sample_id'. You can override using the
@@ -329,7 +329,7 @@ annotated_segs_rp_groups %>%
 
 | sample_id | n() |
 |:----------|----:|
-| 01-20985  | 102 |
+| 01-20985  | 101 |
 | 07-11855  | 146 |
 | 07-20432  | 132 |
 | 12-20363  | 125 |
@@ -356,7 +356,7 @@ unannotated_segs <- read_tsv("segs_of_interest_no_annotation.bed", col_names = c
 dim(unannotated_segs)
 ```
 
-    [1] 505  13
+    [1] 506  13
 
 Combine and add col for annotated vs unannotated.
 
@@ -379,7 +379,7 @@ all_segs_after_rmsk  %>%
     mutate(label_y = cumsum(Count)) %>%
     ggplot(aes(x=sample_id, y=Count, fill=annot_status)) +
     geom_bar(position="stack", stat="identity") +
-    ggtitle("Segments with or without RepeatMasker annotations.\nNote: there can be multiple \"same location\" segments per sample") +
+    ggtitle("Segments with or without RepeatMasker annotations.\nNote: there can be multiple\n \"same location\" segments per sample") +
     geom_text(aes(y=label_y, label = Count), vjust = 1.5, colour = "white")
 ```
 
@@ -425,15 +425,8 @@ same_start_diff_samples <- same_start %>%
     ungroup()
 
 dim(same_start_diff_samples)
-```
-
-    [1] 220  12
-
-``` r
 dim(same_start_diff_samples %>% select(sample_id) %>% unique())
 ```
-
-    [1] 7 1
 
 So all the samples show up in this
 
@@ -443,22 +436,11 @@ Do any of these show up in ALL 7?
 same_start_diff_samples %>% filter(num_samples == 7)
 ```
 
-| read_name | read_strand | read_start | read_seg_length | chr | chr_strand | chr_start | chr_seg_length | sample_id | start_5prime | end_5prime | num_samples |
-|:----------|------------:|-----------:|----------------:|:----|-----------:|----------:|---------------:|:----------|-------------:|-----------:|------------:|
-
 Whats the distribution of the number of samples like?
 
 ``` r
 summary(same_start_diff_samples  %>% select(num_samples))
 ```
-
-      num_samples   
-     Min.   :2.000  
-     1st Qu.:2.000  
-     Median :2.000  
-     Mean   :2.282  
-     3rd Qu.:2.000  
-     Max.   :5.000  
 
 Max is 5! How many/which segments are those
 
@@ -466,14 +448,6 @@ Max is 5! How many/which segments are those
 same_start_diff_samples %>%
     filter(num_samples == 5)
 ```
-
-| read_name   | read_strand | read_start | read_seg_length | chr   | chr_strand | chr_start | chr_seg_length | sample_id | start_5prime | end_5prime | num_samples |
-|:------------|------------:|-----------:|----------------:|:------|-----------:|----------:|---------------:|:----------|-------------:|-----------:|------------:|
-| merge122-4  |           1 |      26997 |             318 | chr13 |          1 |  63082059 |            318 | 01-20985  |     63082059 |   63082377 |           5 |
-| merge583-3  |           1 |      25079 |             298 | chr13 |          1 |  63082059 |            298 | 07-20432  |     63082059 |   63082357 |           5 |
-| merge140-10 |           1 |      28386 |             314 | chr13 |          1 |  63082059 |            314 | 12-20363  |     63082059 |   63082373 |           5 |
-| merge59-4   |           1 |      30203 |             310 | chr13 |          1 |  63082059 |            310 | 12-22919  |     63082059 |   63082369 |           5 |
-| merge120-6  |           1 |      35214 |             307 | chr13 |          1 |  63082059 |            307 | 13-10635  |     63082059 |   63082366 |           5 |
 
 Not sure how to move forward with the ones that have same start
 **within** a sample. My instinct is to select one representative,
@@ -493,27 +467,10 @@ the indivial genomic ranges object for each sample.
 
 ``` r
 gr <- makeGRangesFromDataFrame(segs_correct_start %>% select(chr, start=start_5prime, end=end_5prime, sample_id), keep.extra.columns=TRUE)
-```
-
-    Error in makeGRangesFromDataFrame(segs_correct_start %>% select(chr, start = start_5prime, : could not find function "makeGRangesFromDataFrame"
-
-``` r
 gr_list <- split(gr, as.factor(gr$sample_id))
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'x' in selecting a method for function 'split': object 'gr' not found
-
-``` r
 gr_list$`01-20985`
-```
-
-    Error in eval(expr, envir, enclos): object 'gr_list' not found
-
-``` r
 elementNROWS(gr_list)
 ```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'x' in selecting a method for function 'elementNROWS': object 'gr_list' not found
 
 The above show how many segments in each.
 
@@ -525,8 +482,6 @@ objects in the list
 findOverlaps(gr_list[[1]], gr_list[[2]], ignore.strand=TRUE)
 ```
 
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'findOverlaps': object 'gr_list' not found
-
 The code below will compare a single one to all of them (including
 itself unfortunately)
 
@@ -534,49 +489,15 @@ itself unfortunately)
 findOverlaps(gr_list, gr_list[[1]], ignore.strand=TRUE)
 ```
 
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'findOverlaps': object 'gr_list' not found
-
 ``` r
 countOverlaps(gr_list, gr_list[[1]], ignore.strand=TRUE)
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[2]], ignore.strand=TRUE)
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[3]], ignore.strand=TRUE)
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[4]], ignore.strand=TRUE)
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[5]], ignore.strand=TRUE)
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[6]], ignore.strand=TRUE)
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[7]], ignore.strand=TRUE)
 ```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
 
 This is not symmetric? I wonder if it’s from the overlapping regions
 **within** a sample. i.e. a many-to-one relationship
@@ -624,55 +545,14 @@ segs_correct_start %>%
     arrange(chr,start_5prime)
 ```
 
-| read_name  | read_strand | read_start | read_seg_length | chr   | chr_strand | chr_start | chr_seg_length | sample_id | start_5prime | end_5prime | num_samples |
-|:-----------|------------:|-----------:|----------------:|:------|-----------:|----------:|---------------:|:----------|-------------:|-----------:|------------:|
-| merge527-3 |           1 |      18818 |             151 | chr21 |          1 |  35052567 |            150 | 01-20985  |     35052567 |   35052717 |           2 |
-| merge686-3 |           1 |      22849 |             152 | chr21 |          1 |  35052567 |            150 | 07-11855  |     35052567 |   35052717 |           2 |
-| merge484-3 |          -1 |       3201 |              96 | chr7  |          1 |  90208352 |             96 | 01-20985  |     90208256 |   90208352 |           2 |
-| merge635-3 |          -1 |      15187 |              96 | chr7  |          1 |  90208352 |             96 | 07-11855  |     90208256 |   90208352 |           2 |
-| merge314-4 |          -1 |      17234 |             309 | chr9  |          1 |   6752052 |            309 | 01-20985  |      6751743 |    6752052 |           2 |
-| merge300-4 |          -1 |      20698 |             309 | chr9  |          1 |   6752052 |            309 | 07-11855  |      6751743 |    6752052 |           2 |
-
 So expect 3 between these two
 
 ``` r
 countOverlaps(gr_list, gr_list[[1]], ignore.strand=TRUE, type="start")
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[2]], ignore.strand=TRUE, type="start")
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[3]], ignore.strand=TRUE, type="start")
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[4]], ignore.strand=TRUE, type="start")
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[5]], ignore.strand=TRUE, type="start")
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[6]], ignore.strand=TRUE, type="start")
-```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
-
-``` r
 countOverlaps(gr_list, gr_list[[7]], ignore.strand=TRUE, type="start")
 ```
-
-    Error in h(simpleError(msg, call)): error in evaluating the argument 'query' in selecting a method for function 'countOverlaps': object 'gr_list' not found
